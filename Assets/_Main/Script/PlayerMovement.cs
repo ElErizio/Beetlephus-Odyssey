@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using UnityEngine.SceneManagement;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -32,6 +33,21 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    public override void OnStopNetwork()
+    {
+        PersonajesManager.Instance.personajeObjects.Remove(base.NetworkObject);
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= SceneManagerOnsceneLoaded;
+    }
+
+    public override void OnStartNetwork()
+    {
+        if (Owner.IsLocalClient)
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += SceneManagerOnsceneLoaded;
+        }
+        PersonajesManager.Instance.personajeObjects.Add(base.NetworkObject);
+    }
+
     private void Update()
     {
         if (IsOwner)
@@ -54,6 +70,13 @@ public class PlayerMovement : NetworkBehaviour
     private void OnDisable()
     {
         InputReader.OnPushBallEvent -= PushBall;
+    }
+
+    private void SceneManagerOnsceneLoaded(Scene Escena, LoadSceneMode Modo)
+    {
+
+        GameObject spawn = GameObject.FindGameObjectWithTag("Spawn");
+        transform.position = spawn.transform.position;
     }
 
     private void PushBall()
